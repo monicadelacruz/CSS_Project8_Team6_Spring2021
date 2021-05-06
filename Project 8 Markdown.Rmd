@@ -1,6 +1,7 @@
 ---
 title: "Project 8 Template"
 output: pdf_document
+authors: Shruti Bathia, Monica De La Cruz, Kelly Quinn
 ---
 
 ```{r}
@@ -65,17 +66,119 @@ Fit a SuperLearner model to estimate the probability of someone dying from compl
 # Fit SuperLearner Model
 
 ## sl lib
+listWrappers()
+# chose SL.ksvm, SL.glmnet,SL.ranger, SL.step, SL.rpartPrune
 
 ## Train/Test split
+heart_disease_split <- initial_split(heart_disease, prop = 3/4)
 
-## Train SuperLearner
+# Declare the training set with rsample::training()
+train <- training(heart_disease_split)
 
-## Risk and Coefficient of each model
+# y_train 
+y_train <- train$mortality
+
+# x_train is everything but the outcome  
+x_train <- train %>%
+  select(-mortality, -bmi_2, -blood_pressure_2, -chol_2, -blood_pressure_medication_2)
+
+# Do the same procedure with the test set
+test <- testing(heart_disease_split)
+
+y_test <- test %>% select(mortality)
+
+x_test <- test %>%
+  select(-mortality, -bmi_2, -blood_pressure_2, -chol_2, -blood_pressure_medication_2)
+
+## Train discrete SuperLearner algorithms 
+
+sl_ksvm <- SuperLearner(Y = y_train,
+                         X = x_train,
+                         family = binomial(),
+                         SL.library = "SL.ksvm")
+
+sl_ksvm
+# Risk of sl_kvsm: 0.2325519
+
+sl_glmnet <- SuperLearner(Y = y_train,
+                         X = x_train,
+                         family = binomial(),
+                         SL.library = "SL.glmnet")
+sl_glmnet
+# Risk of sl_glmnet: 0.2369953
+
+sl_ranger <- SuperLearner(Y = y_train,
+                         X = x_train,
+                         family = binomial(),
+                         SL.library = "SL.ranger")
+sl_ranger
+# Risk of sl_ranger: 0.2316155
+
+sl_step <- SuperLearner(Y = y_train,
+                         X = x_train,
+                         family = binomial(),
+                         SL.library = "SL.step")
+sl_step
+# Risk of sl_step: 0.2369739
+
+sl_rpartPrune <- SuperLearner(Y = y_train,
+                         X = x_train,
+                         family = binomial(),
+                         SL.library = "SL.rpartPrune")
+sl_rpartPrune
+# Risk of sl_rpartPrune: 0.2291455
+```
+
+```{r}
+# Here is the risk of the best model (discrete SuperLearner winner).
+# Use which.min boolean to find minimum cvRisk in list
+#sl_rpartPrune$cvRisk[which.min(sl_rpartPrune$cvRisk)]
+
+# Of the chosen discrete algorithms, sl_rpartPrune has the lowest mean squared
+# error and is therefore better than the others. Now we test try out the 
+# SuperLearner ensemble with all of these 
+
+# Train SuperLearner ensemble
+sl = SuperLearner(Y = y_train,
+                  X = x_train,
+                  family = binomial(),
+                  SL.library = c('SL.ksvm',
+                                 'SL.glmnet',
+                                 'SL.ranger',
+                                 'SL.step',
+                                 'SL.rpartPrune'))
+
+## Risk and Coefficient of the ensemble
+sl
+```
+
+```{r}
+#Validation
+preds <- predict(sl,
+                 x_test,
+                 onlySL = TRUE)
+
+# start with y_test
+validation <- y_test %>%
+  # add our predictions
+  bind_cols(preds$pred[,1]) %>%
+  # rename columns
+  rename(obs = `mortality`,
+         pred = `...2`) %>%
+  mutate(pred = ifelse(pred >= .5, 
+                           1,
+                           0))
+
+head(validation)
 
 ## Discrete winner and superlearner ensemble performance
 
+
 ## Confusion Matrix
+caret::confusionMatrix(as.factor(validation$pred),
+                       as.factor(validation$obs))
 ```
+
 
 ## Discussion Questions
 
