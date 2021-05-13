@@ -171,20 +171,26 @@ validation <- y_test %>%
 
 head(validation)
 
-## Discrete winner and superlearner ensemble performance
-
-
 ## Confusion Matrix
 caret::confusionMatrix(as.factor(validation$pred),
                        as.factor(validation$obs))
 ```
-
 
 ## Discussion Questions
 
 \begin{enumerate}
     \item Why should we, in general, prefer the SuperLearner ensemble to the discrete winner in cross-validation? Or in other words, what is the advantage of "blending" algorithms together and giving them each weights, rather than just using the single best algorithm (with best being defined as minimizing risk)?
 \end{enumerate}
+
+The advantage of blending algorighms using a SuperLearner ensemble versus just
+using the single best algorithm is that an ensemble approach is more data and
+problem adaptive than a single algorithm, therefore decreasing bias of the
+estimator. Using a single estimator that is misspecified (one that does
+not truly fit the data) may lead to biased estimates and misleading inference. 
+Using the SuperLearner ensemble provides the ability to not only test out 
+multiple algorithms at the same from a library and see which performs best, and
+combine the best performing algorithms together to allow for the best 
+prediction in cross-validation and estimates in inference.
 
 # Targeted Maximum Likelihood Estimation
 
