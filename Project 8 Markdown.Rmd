@@ -280,7 +280,7 @@ The relationship between taking blood pressure medication and one's blood pressu
 \begin{enumerate}
     \item What is a "double robust" estimator? Why does it provide a guarantee of consistency if either the outcome model or propensity score model is correctly specified? Or in other words, why does mispecifying one of the models not break the analysis? \textbf{Hint}: When answering this question, think about how your introductory statistics courses emphasized using theory to determine the correct outcome model, and in this course how we explored the benefits of matching.
 \end{enumerate}
-Doubly robust means that if we either specify the correct model to estimate the expected outcome or specify the correct model to estimate the probability of traeetment, the TMLE estimator will be be unbiased as the sample size approaches infinity. 
+Doubly robust estimators guarantee consistency in that if we correctly estimate either the expectation of Y given the treatment and covariates or the expectation of the treatment given the covariates. If one of these are estimated consistengly then TMMLE will converge on the true parameter as the sample size approaches infinity. 
 
 # LTMLE Estimation
 
