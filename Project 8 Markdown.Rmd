@@ -212,7 +212,7 @@ Using ggdag and daggity, draw a directed acylcic graph (DAG) that describes the 
 dag <- dagify(Y ~ A + inc + age + bp + BMI, 
        A ~ bp + inc, 
        inc ~ age + educ + race + sex, 
-       bp ~ inc + BMI, 
+       bp ~ inc + BMI + A, 
        exposure = "A",
        outcome = "Y", 
        coords = list(x = c(race=1, sex=1, 
@@ -233,6 +233,8 @@ ggdag_status(dag, use_labels = "label", text = FALSE) +
   guides(fill = FALSE, color = FALSE) + 
   theme_dag()
 
+ssss
+
 ```
 
 ## TMLE Estimation
@@ -244,6 +246,18 @@ Use the `tmle` package to estimate a model for the effect of blood pressure medi
     \item Use the same outcome model and propensity score model that you specified in the DAG above. If in your DAG you concluded that it is not possible to make a causal inference from this dataset, specify a simpler model and note your assumptions for this step.
     \item Report the average treatment effect and any other relevant statistics
 \end{enumerate}
+```{r}
+
+tmle_fit <-
+  tmle::tmle(Y = Y, 
+           A = A, 
+           W = W, 
+           Q.SL.library = sl_libs, 
+           g.SL.library = sl_libs) 
+
+tmle_fit
+
+```
 
 ## Discussion Questions
 
