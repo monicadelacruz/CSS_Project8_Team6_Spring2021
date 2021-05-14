@@ -19,6 +19,7 @@ pacman::p_load(
   here)
 
 heart_disease <- read_csv(here('heart_disease_tmle.csv'))
+
 ```
 
 # Introduction
@@ -207,6 +208,31 @@ Using ggdag and daggity, draw a directed acylcic graph (DAG) that describes the 
 
 ```{r}
 # DAG for TMLE
+
+dag <- dagify(Y ~ A + inc + age + bp + BMI, 
+       A ~ bp + inc, 
+       inc ~ age + educ + race + sex, 
+       bp ~ inc + BMI, 
+       exposure = "A",
+       outcome = "Y", 
+       coords = list(x = c(race=1, sex=1, 
+                           A=2, inc=2, bp=2, 
+                           BMI=3, age=3, 
+                           Y=4,
+                           educ=5), 
+                     y = c(BMI=1, bp=1, 
+                           A=2, Y=2, 
+                           educ=2.5, sex=2.5,
+                           inc=3, age=3, race=3)), 
+         labels = c(Y = "mortality", A = "BP med", 
+                    age = "age", BMI = "BMI", bp = "blood pressure", 
+                    inc = "income", educ = "educ", 
+                    race = "race", sex = "sex"))
+
+ggdag_status(dag, use_labels = "label", text = FALSE) + 
+  guides(fill = FALSE, color = FALSE) + 
+  theme_dag()
+
 ```
 
 ## TMLE Estimation
