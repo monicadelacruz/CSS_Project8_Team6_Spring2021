@@ -212,28 +212,28 @@ Using ggdag and daggity, draw a directed acylcic graph (DAG) that describes the 
 dag <- dagify(Y ~ A + inc + age + bp + BMI, 
        A ~ bp + inc, 
        inc ~ age + educ + race + sex, 
-       bp ~ inc + BMI + A, 
+       bp ~ inc + BMI + chol + A, 
        exposure = "A",
        outcome = "Y", 
-       coords = list(x = c(race=1, sex=1, 
+       coords = list(x = c(race=1, sex=1, chol=1, 
                            A=2, inc=2, bp=2, 
                            BMI=3, age=3, 
                            Y=4,
                            educ=5), 
-                     y = c(BMI=1, bp=1, 
+                     y = c(BMI=1, bp=1,
+                           chol = 1.5, 
                            A=2, Y=2, 
                            educ=2.5, sex=2.5,
                            inc=3, age=3, race=3)), 
          labels = c(Y = "mortality", A = "BP med", 
                     age = "age", BMI = "BMI", bp = "blood pressure", 
                     inc = "income", educ = "educ", 
-                    race = "race", sex = "sex"))
+                    race = "race", sex = "sex", chol = "chol"))
 
 ggdag_status(dag, use_labels = "label", text = FALSE) + 
   guides(fill = FALSE, color = FALSE) + 
   theme_dag()
 
-ssss
 
 ```
 
@@ -243,11 +243,23 @@ Use the `tmle` package to estimate a model for the effect of blood pressure medi
 
 \begin{enumerate}
     \item Use the same SuperLearner library you defined earlier
-    \item Use the same outcome model and propensity score model that you specified in the DAG above. If in your DAG you concluded that it is not possible to make a causal inference from this dataset, specify a simpler model and note your assumptions for this step.
+    \item Use the same outcome model and propensity score model that you specified in the DAG above. If in your DAG you concluded that it is not possible to make a causal inference from this dataset, specify a simpler model and note your assumptions for this step. 
     \item Report the average treatment effect and any other relevant statistics
 \end{enumerate}
 ```{r}
 
+Y <- heart_disease$mortality
+A <- heart_disease$blood_pressure_medication
+W <- heart_disease %>% select(simplified_race, income_thousands, age, sex_at_birth, college_educ, bmi, chol, blood_pressure)
+
+# save sl library from above 
+sl_libs <- c('SL.ksvm',
+             'SL.glmnet',
+             'SL.ranger',
+             'SL.step',
+             'SL.rpartPrune')
+ 
+ 
 tmle_fit <-
   tmle::tmle(Y = Y, 
            A = A, 
@@ -257,13 +269,18 @@ tmle_fit <-
 
 tmle_fit
 
+# save ATE 
+ATE <- tmle_fit[["estimates"]][["ATE"]]$psi %>% round(3)
+
 ```
+The relationship between taking blood pressure medication and one's blood pressure is bidirectional: those with high BP are more likely to be treated, and BP should be affected by receiving the treatment. As such, we will assume BP meds only affect mortality through lowering blood pressure. We also need to assume that we observed all common causes of both A and Y.The ATE is `r ATE`. 
 
 ## Discussion Questions
 
 \begin{enumerate}
     \item What is a "double robust" estimator? Why does it provide a guarantee of consistency if either the outcome model or propensity score model is correctly specified? Or in other words, why does mispecifying one of the models not break the analysis? \textbf{Hint}: When answering this question, think about how your introductory statistics courses emphasized using theory to determine the correct outcome model, and in this course how we explored the benefits of matching.
 \end{enumerate}
+Doubly robust means that if we either specify the correct model to estimate the expected outcome or specify the correct model to estimate the probability of traeetment, the TMLE estimator will be be unbiased as the sample size approaches infinity. 
 
 # LTMLE Estimation
 
