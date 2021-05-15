@@ -18,6 +18,7 @@ pacman::p_load(
   ggdag,
   here)
 
+
 heart_disease <- read_csv(here('heart_disease_tmle.csv'))
 
 ```
@@ -280,7 +281,7 @@ The relationship between taking blood pressure medication and one's blood pressu
 \begin{enumerate}
     \item What is a "double robust" estimator? Why does it provide a guarantee of consistency if either the outcome model or propensity score model is correctly specified? Or in other words, why does mispecifying one of the models not break the analysis? \textbf{Hint}: When answering this question, think about how your introductory statistics courses emphasized using theory to determine the correct outcome model, and in this course how we explored the benefits of matching.
 \end{enumerate}
-Doubly robust estimators guarantee consistency in that if we correctly estimate either the expectation of Y given the treatment and covariates or the expectation of the treatment given the covariates. If one of these are estimated consistengly then TMMLE will converge on the true parameter as the sample size approaches infinity. 
+Doubly robust means that if we either specify the correct model to estimate the expected outcome or specify the correct model to estimate the probability of traeetment, the TMLE estimator will be be unbiased as the sample size approaches infinity. 
 
 # LTMLE Estimation
 
@@ -304,8 +305,30 @@ Use the `ltmle` package for this section. First fit a "naive model" that \textbf
 
 ```{r}
 ## Naive Model (no time-dependent confounding) estimate
-
+A1 <- heart_disease$blood_pressure_medication
+A2 <- heart_disease$blood_pressure_medication_2
+W <- heart_disease %>% select(sex_at_birth, simplified_race,income_thousands,college_educ, blood_pressure)
+Y <- heart_disease$mortality
+data_naive <- data.frame(W, A1, A2, Y)
+ltmle_naive_est <- 
+  ltmle(data_naive, 
+        Anodes= c("A1", "A2"), 
+        Lnodes=NULL, 
+        Ynodes="Y", 
+        abar=c(1, 1),
+        SL.library = sl_libs)
+ltmle_naive_est$estimates
 ## LTMLE estimate
+L <- heart_disease %>% select(blood_pressure_2, bmi_2, chol_2)
+data_ltmle <- data.frame(W, A1, L, A2, Y)
+ltmle_est <- 
+  ltmle(data_ltmle, 
+        Anodes=c("A1", "A2"), 
+        Lnodes=c("blood_pressure_2", "bmi_2", "chol_2"), 
+        Ynodes="Y", 
+        abar=c(1, 1), 
+        SL.library = sl_libs)
+ltmle_est$estimates
 ```
 
 ## Discussion Questions
@@ -313,4 +336,4 @@ Use the `ltmle` package for this section. First fit a "naive model" that \textbf
 \begin{enumerate}
     \item What sorts of time-dependent confounding should we be especially worried about? For instance, would we be concerned about a running variable for age the same way we might be concerned about blood pressure measured at two different times?
 \end{enumerate}
-
+We do not need to worry about age since its increment does not depend on any confoudning variable. Blood pressure on the other hand, measured at two different times may be a result of something that is unmeasured by the model. 
